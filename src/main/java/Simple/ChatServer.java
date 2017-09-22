@@ -84,7 +84,7 @@ public class ChatServer implements Runnable {
     }
 
     public synchronized void handle(int ID, String input, String username) {
-        ServerGraphicalUserInterface.publicGUI.appendTextMessages(input);
+        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
         //Hier werden die Nachrichten verarbeitet
         if (input.equals("-bye")) {
             clients[findClientbyID(ID)].send("/bye");
@@ -114,7 +114,6 @@ public class ChatServer implements Runnable {
             for (int i = 0; i < clientCount; i++) {
                 clients[i].send(username + ": " + input);
             }
-            System.out.println(username + ": " + input);
         }
     }
 

@@ -16,8 +16,9 @@ public class ServerGraphicalUserInterface {
     public JPanel panel;
     private JButton Start;
     private JButton stopServerButton;
-    private JTextArea textArea2;
-    private JList list1;
+    private JTextArea textArea_sendMessages;
+    private JList userList;
+    private DefaultListModel userlistModel = new DefaultListModel();
 
     public ServerGraphicalUserInterface() {
 
@@ -66,19 +67,24 @@ public class ServerGraphicalUserInterface {
         frame.setMinimumSize(frame.getSize());
 
         //Eigenschaften der Componenten festlegen
-        publicGUI.textArea2.setEditable(false);
-        publicGUI.textArea2.setWrapStyleWord(true);
-        publicGUI.textArea2.setLineWrap(true);
-        DefaultCaret caret = (DefaultCaret) publicGUI.textArea2.getCaret(); //Auto Scroll von dem Update Log
+        publicGUI.textArea_sendMessages.setEditable(false);
+        publicGUI.textArea_sendMessages.setWrapStyleWord(true);
+        publicGUI.textArea_sendMessages.setLineWrap(true);
+        DefaultCaret caret = (DefaultCaret) publicGUI.textArea_sendMessages.getCaret(); //Auto Scroll von dem Update Log
         caret.setUpdatePolicy(ALWAYS_UPDATE);
+
+        publicGUI.userList.setModel(userlistModel);
+        publicGUI.userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        publicGUI.userList.setLayoutOrientation(JList.VERTICAL);
+        publicGUI.userList.setVisibleRowCount(-1);
 
         frame.setVisible(true);
     }
 
     public void appendTextMessages(String message) {
-        publicGUI.textArea2.append(message + "\n");
+        publicGUI.textArea_sendMessages.append(message + "\n");
     }
     public void appendUsers(String message){
-        //publicGUI.list1.add(message);
+        //publicGUI.userList.add(message);
     }
 }
