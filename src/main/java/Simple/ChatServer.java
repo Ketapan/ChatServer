@@ -1,5 +1,7 @@
 package Simple;
 
+import Gui.ServerGraphicalUserInterface;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -13,7 +15,7 @@ public class ChatServer implements Runnable {
     private ServerSocket server = null;
     private Thread thread = null;
     private int clientCount = 0;
-    //todo: github check du fotzä
+
     //TODO: Bytes senden (check)
     //TODO: Updater
     //TODO: Screenshot senden (GUI)
@@ -82,6 +84,7 @@ public class ChatServer implements Runnable {
     }
 
     public synchronized void handle(int ID, String input, String username) {
+        ServerGraphicalUserInterface.publicGUI.appendTextMessages(input);
         //Hier werden die Nachrichten verarbeitet
         if (input.equals("-bye")) {
             clients[findClientbyID(ID)].send("/bye");
@@ -107,6 +110,7 @@ public class ChatServer implements Runnable {
             clients[findClientbyName(privateMessageTo.substring(1, privateMessageTo.length()))].send(input);
         }
         else {
+
             for (int i = 0; i < clientCount; i++) {
                 clients[i].send(username + ": " + input);
             }
