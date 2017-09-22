@@ -13,7 +13,7 @@ public class ChatServer implements Runnable {
     private ServerSocket server = null;
     private Thread thread = null;
     private int clientCount = 0;
-
+    //todo: github check du fotzä
     //TODO: Bytes senden (check)
     //TODO: Updater
     //TODO: Screenshot senden (GUI)
