@@ -49,7 +49,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="75b5d" class="javax.swing.JList" binding="userList" default-binding="true">
+          <component id="bac52" class="javax.swing.JList" binding="userList">
             <constraints/>
             <properties/>
           </component>

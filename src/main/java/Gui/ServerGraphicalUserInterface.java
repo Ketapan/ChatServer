@@ -5,7 +5,11 @@ import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import Simple.ChatServer;
+import java.util.ArrayList;
+
+import Listener.StartServerActionListener;
+import Listener.StopServerActionListener;
+import Prozess.ChatServer;
 import static javax.swing.text.DefaultCaret.ALWAYS_UPDATE;
 
 /**
@@ -13,31 +17,14 @@ import static javax.swing.text.DefaultCaret.ALWAYS_UPDATE;
  */
 public class ServerGraphicalUserInterface {
     public static ServerGraphicalUserInterface publicGUI;
+
     public JPanel panel;
-    private JButton Start;
-    private JButton stopServerButton;
-    private JTextArea textArea_sendMessages;
-    private JList userList;
-    private DefaultListModel userlistModel = new DefaultListModel();
+    public JButton Start;
+    public JButton stopServerButton;
+    public JTextArea textArea_sendMessages;
+    public JList userList;
+    public DefaultListModel userListModel = new DefaultListModel();
 
-    public ServerGraphicalUserInterface() {
-
-        Start.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Simple.ChatServer sc = new ChatServer();
-                sc.startServer(5555);
-            }
-        });
-
-        stopServerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Simple.ChatServer sc = new ChatServer();
-                sc.stop();
-            }
-        });
-    }
 
     public static void main(String[] args)
     {
@@ -57,7 +44,7 @@ public class ServerGraphicalUserInterface {
 
         //Erzeuge die GUI
         publicGUI = new ServerGraphicalUserInterface();
-        JFrame frame = new JFrame("Client");
+        JFrame frame = new JFrame("Server");
         frame.setPreferredSize(new Dimension(700,450));
         frame.setContentPane(publicGUI.panel);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -73,18 +60,41 @@ public class ServerGraphicalUserInterface {
         DefaultCaret caret = (DefaultCaret) publicGUI.textArea_sendMessages.getCaret(); //Auto Scroll von dem Update Log
         caret.setUpdatePolicy(ALWAYS_UPDATE);
 
-        publicGUI.userList.setModel(userlistModel);
+        publicGUI.userList.setModel(publicGUI.userListModel);
         publicGUI.userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         publicGUI.userList.setLayoutOrientation(JList.VERTICAL);
         publicGUI.userList.setVisibleRowCount(-1);
 
         frame.setVisible(true);
+
+
     }
 
     public void appendTextMessages(String message) {
         publicGUI.textArea_sendMessages.append(message + "\n");
     }
-    public void appendUsers(String message){
-        //publicGUI.userList.add(message);
+
+    //Listener
+    public ServerGraphicalUserInterface() {
+
+        Start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StartServerActionListener ssal = new StartServerActionListener();
+                ssal.startServer();
+            }
+        });
+
+        stopServerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StopServerActionListener stopServerListener = new StopServerActionListener();
+                /*
+                    TODO: Server stoppen muss auf dem gleichen Objekt pasieren wie das starten
+                            Gleichzeitig sollte auch die Verbindung zu jedem client sauber getrennt werden
+                            -> /bye an alle clients senden mit noch einer nachricht davor irgendwwie Server stoppt jetzt oder so
+                 */
+            }
+        });
     }
 }

@@ -1,4 +1,6 @@
-package Simple;
+package Prozess;
+
+import Gui.ServerGraphicalUserInterface;
 
 import java.net.*;
 import java.io.*;
@@ -27,7 +29,7 @@ public class ChatServerThread extends Thread {
             streamOut.write(message);
             streamOut.flush();
         } catch (IOException ioe) {
-            System.out.println(ID + " ERROR sending: " + ioe.getMessage());
+            ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR sending: " + ioe.getMessage());
             server.remove(ID);
             stop();
         }
@@ -52,7 +54,7 @@ public class ChatServerThread extends Thread {
             streamOut.flush();
         } catch (IOException e)
         {
-            System.out.println(ID + " ERROR sending: " + e.getMessage());
+            ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR sending: " + e.getMessage());
             server.remove(ID);
             stop();
         }
@@ -66,7 +68,7 @@ public class ChatServerThread extends Thread {
 
     public void run() {
         //Hier werden die bytes von den clients empfangen und in einen string konvertiert
-        System.out.println("Server Thread " + ID + " running.");
+        ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server Thread " + ID + " running.");
         while (true) {
             try {
                 int length = streamIn.readInt();
@@ -79,7 +81,7 @@ public class ChatServerThread extends Thread {
                 }
                 server.handle(ID, messageAsString, username);
             } catch (IOException ioe) {
-                System.out.println(ID + " ERROR reading: " + ioe.getMessage());
+                ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());
                 server.remove(ID);
                 stop();
                 interrupt();
