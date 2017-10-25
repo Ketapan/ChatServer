@@ -1,16 +1,14 @@
 package Prozess;
 
+import Gui.Messages.ZipMessage;
 import Gui.ServerGraphicalUserInterface;
-import com.sun.security.ntlm.Server;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.net.*;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Base64;
 
 public class ChatServer implements Runnable {
@@ -87,45 +85,40 @@ public class ChatServer implements Runnable {
         return -1;
     }
 
-    public synchronized void handle(int ID, String input, String username) {
-        //Hier werden die Nachrichten verarbeitet
-        if (input.equals("-bye") || input.equals("-exit") || input.equals("-quit")) {
-            clients[findClientbyID(ID)].send("/bye");
-            remove(ID);
-            for (int i = 0; i < clientCount; i++) {
-                clients[i].send("Client: " + username + " disconnected.");
-            }
-        }
-        else {
-            sendToAllClients(username + ": " + input);
-        }
+    public synchronized void closeClientConnection(int ID, String username){
+        clients[findClientbyName(username)].sendMessage(username, "exit", "exit");
+        remove(ID);
     }
 
-    public synchronized void privatMessages(String privateMessageTo, String input, String username){
-        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
-        if(input.startsWith(":-pic")){
-            String temp = input;
-            temp = temp.substring(5, temp.length());
-//            BufferedImage bImageFromConvert = base64StringToImg(temp);
-//            Toolkit toolkit = Toolkit.getDefaultToolkit();
-//            Image img = toolkit.createImage(bImageFromConvert.getSource());
-//            //Erzeuge die GUI
-//            JFrame frame = new JFrame("Screenshot");
-//            frame.getContentPane().add(new PicturePanel(img));
-//            frame.setSize(800, 400);
-//            frame.setLocationRelativeTo(null);
-//            frame.setVisible(true);
-//            temp = "";
-//            temp = imgToBase64String(bImageFromConvert);
-            temp = "/pic" + temp;
-            clients[findClientbyName(privateMessageTo)].send(temp);
-        } else if(input.startsWith("-msg")){
-            
-        }
-        else {
-            clients[findClientbyName(privateMessageTo)].send(username + input);
-        }
+    public synchronized void privatMessages(String privateMessageTo, String input){
+        clients[findClientbyName(privateMessageTo)].sendMessage(privateMessageTo, input, "pm");
     }
+
+//    public synchronized void privatMessages(String privateMessageTo, String input, String username){
+//        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
+//        if(input.startsWith(":-pic")){
+//            String temp = input;
+//            temp = temp.substring(5, temp.length());
+////            BufferedImage bImageFromConvert = base64StringToImg(temp);
+////            Toolkit toolkit = Toolkit.getDefaultToolkit();
+////            Image img = toolkit.createImage(bImageFromConvert.getSource());
+////            //Erzeuge die GUI
+////            JFrame frame = new JFrame("Screenshot");
+////            frame.getContentPane().add(new PicturePanel(img));
+////            frame.setSize(800, 400);
+////            frame.setLocationRelativeTo(null);
+////            frame.setVisible(true);
+////            temp = "";
+////            temp = imgToBase64String(bImageFromConvert);
+//            temp = "/pic" + temp;
+//            clients[findClientbyName(privateMessageTo)].send(temp);
+//        } else if(input.startsWith("-msg")){
+//
+//        }
+//        else {
+//            clients[findClientbyName(privateMessageTo)].send(username + input);
+//        }
+//    }
 
     public void refreshAllOnlineLists(){
         sendToAllClients("/refreshList");
@@ -136,12 +129,12 @@ public class ChatServer implements Runnable {
 
     public void sendToAllClients(String input){
         for(int i = 0; i < clientCount; i++){
-            clients[i].send(input);
+            clients[i].sendMessage("", input, "");
         }
         ServerGraphicalUserInterface.publicGUI.appendTextMessages(input);
     }
 
-    private void makeScreenshot(int ID) {
+    private void makeScreenshot(String messageTo) {
         try {
             byte[] imageInByte;
 
@@ -150,7 +143,8 @@ public class ChatServer implements Runnable {
 
             String temp = imgToBase64String(screenshot);
 
-            clients[findClientbyID(ID)].send("/pic" + temp);
+//            clients[findClientbyID(ID)].send("/pic" + temp);
+            clients[findClientbyName(messageTo)].sendMessage(messageTo, temp, "pic");
 
         } catch (AWTException e) {
             e.printStackTrace();
