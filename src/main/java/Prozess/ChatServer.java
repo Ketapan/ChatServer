@@ -4,11 +4,14 @@ import Gui.ServerGraphicalUserInterface;
 import com.sun.security.ntlm.Server;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class ChatServer implements Runnable {
     //Server Variablen
@@ -33,6 +36,7 @@ public class ChatServer implements Runnable {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Binding to port " + port + ", please wait ...");
             server = new ServerSocket(port);
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server started: " + server);
+            System.out.println();
             start();
         } catch (IOException ioe) {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Can not bind to port " + port + ": " + ioe.getMessage());
@@ -85,7 +89,6 @@ public class ChatServer implements Runnable {
     }
 
     public synchronized void handle(int ID, String input, String username) {
-        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
         //Hier werden die Nachrichten verarbeitet
         if (input.equals("-bye") || input.equals("-exit") || input.equals("-quit")) {
             clients[findClientbyID(ID)].send("/bye");
@@ -93,53 +96,88 @@ public class ChatServer implements Runnable {
             for (int i = 0; i < clientCount; i++) {
                 clients[i].send("Client: " + username + " disconnected.");
             }
-        } else if (input.equalsIgnoreCase("-who")) {
-            int temp = clientCount;
-            for (int i = 0; i < temp; i++) {
-                clients[findClientbyID(ID)].send("- " + clients[i].getUsername());
-            }
-        } else if(input.equalsIgnoreCase("-pic")) {
-            makeScreenshot(ID);
-            clients[findClientbyID(ID)].send("/pic");
         }
-//        else if(input.startsWith("-pm:"))
-//        {
-//            String privateMessageTo;
-//            input = input.substring(input.indexOf(":"), input.length());
-//            privateMessageTo = input;
-//            privateMessageTo = privateMessageTo.substring(1, privateMessageTo.lastIndexOf(":"));
-//            input = input.substring(2, input.length());
-//            clients[findClientbyName(privateMessageTo.substring(1, privateMessageTo.length()))].send(input);
-//        }
         else {
-            for (int i = 0; i < clientCount; i++) {
-                clients[i].send(username + ": " + input);
-            }
+            sendToAllClients(username + ": " + input);
         }
     }
 
+    public synchronized void privatMessages(String privateMessageTo, String input, String username){
+        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
+        if(input.startsWith(":-pic")){
+            String temp = input;
+            temp = temp.substring(5, temp.length());
+//            BufferedImage bImageFromConvert = base64StringToImg(temp);
+//            Toolkit toolkit = Toolkit.getDefaultToolkit();
+//            Image img = toolkit.createImage(bImageFromConvert.getSource());
+//            //Erzeuge die GUI
+//            JFrame frame = new JFrame("Screenshot");
+//            frame.getContentPane().add(new PicturePanel(img));
+//            frame.setSize(800, 400);
+//            frame.setLocationRelativeTo(null);
+//            frame.setVisible(true);
+//            temp = "";
+//            temp = imgToBase64String(bImageFromConvert);
+            temp = "/pic" + temp;
+            clients[findClientbyName(privateMessageTo)].send(temp);
+        } else if(input.startsWith("-msg")){
+            
+        }
+        else {
+            clients[findClientbyName(privateMessageTo)].send(username + input);
+        }
+    }
+
+    public void refreshAllOnlineLists(){
+        sendToAllClients("/refreshList");
+        for(int i = 0; i < ServerGraphicalUserInterface.publicGUI.userListModel.getSize(); i++){
+            sendToAllClients("/addwho" + ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i));
+        }
+    }
+
+    public void sendToAllClients(String input){
+        for(int i = 0; i < clientCount; i++){
+            clients[i].send(input);
+        }
+        ServerGraphicalUserInterface.publicGUI.appendTextMessages(input);
+    }
+
     private void makeScreenshot(int ID) {
-        //macht einen Screenshot und schickt ihn an alle clients, macht immoment nur screenshot von server "perspektive"
-        //clients sollen aber auch screenshots machen und diese versenden können
-        //screenshot soll beim client dann auf der Form erscheinen und nicht hart auf die platte geschrieben werden
         try {
             byte[] imageInByte;
 
             Robot awt_robot = new Robot();
             BufferedImage screenshot = awt_robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-//            ImageIO.write(screenshot, "PNG", new File("C:\\Users\\aaron\\Desktop\\Entire_Screen.png"));
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(screenshot, "PNG", baos);
-            baos.flush();
-            imageInByte = baos.toByteArray();
-            baos.close();
 
-            clients[findClientbyID(ID)].sendBytes(imageInByte);
+            String temp = imgToBase64String(screenshot);
+
+            clients[findClientbyID(ID)].send("/pic" + temp);
 
         } catch (AWTException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+    }
+
+    private static String imgToBase64String(final RenderedImage img)
+    {
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        try
+        {
+            ImageIO.write(img, "PNG", os);
+            return Base64.getEncoder().encodeToString(os.toByteArray());
+        }
+        catch (final IOException ioe)
+        {
+            throw new UncheckedIOException(ioe);
+        }
+    }
+
+    public static BufferedImage base64StringToImg(final String base64String) {
+        try {
+            return ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(base64String)));
+        } catch (final IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 
@@ -158,6 +196,8 @@ public class ChatServer implements Runnable {
                     clients[i - 1] = clients[i];
                 }
             clientCount--;
+            refreshAllOnlineLists();
+            sendToAllClients(username + " ging offline");
             try {
                 toTerminate.close();
             } catch (IOException ioe) {
@@ -173,6 +213,7 @@ public class ChatServer implements Runnable {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Client acepted: " + socket);
             DataInputStream input = null;
             String username = "";
+            int ID;
 
             try {
                 input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -186,20 +227,55 @@ public class ChatServer implements Runnable {
                 e.printStackTrace();
             }
 
-            clients[clientCount] = new ChatServerThread(this, socket, username);
+            if(!isUsernameForgive(username)){
+                clients[clientCount] = new ChatServerThread(this, socket, username);
 
-            try {
-                clients[clientCount].open();
-                clients[clientCount].start();
-                clientCount++;
-            } catch (IOException ioe) {
-                ServerGraphicalUserInterface.publicGUI.appendTextMessages("Error opening thread: " + ioe);
+                try {
+                    clients[clientCount].open();
+                    clients[clientCount].start();
+                    clientCount++;
+                } catch (IOException ioe) {
+                    ServerGraphicalUserInterface.publicGUI.appendTextMessages("Error opening thread: " + ioe);
+                }
+
+                ServerGraphicalUserInterface.publicGUI.userListModel.addElement(username);
+                refreshAllOnlineLists();
+                sendToAllClients(username + " kam online.");
+
+            } else {
+                clients[clientCount] = new ChatServerThread(this, socket, "BEREITSVERGEBEN");
+                try {
+                    clients[clientCount].open();
+                    clients[clientCount].start();
+                    clientCount++;
+                } catch (IOException ioe) {
+                    ServerGraphicalUserInterface.publicGUI.appendTextMessages("Error opening thread: " + ioe);
+                }
+                ID = clients[findClientbyName("BEREITSVERGEBEN")].getID();
+                clients[findClientbyName("BEREITSVERGEBEN")].send("/vergeben");
+                remove(ID);
             }
-
-            ServerGraphicalUserInterface.publicGUI.userListModel.addElement(username);
-
         } else {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Client refused: maximum " + clients.length + " reached.");
         }
+    }
+
+    private boolean isUsernameForgive(String username){
+        boolean isForgive = false;
+
+        String user;
+        int z = 0;
+        for(int i = 0; i < ServerGraphicalUserInterface.publicGUI.userListModel.getSize(); i++){
+            user = String.valueOf(ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i));
+            if(user.equalsIgnoreCase(username)){
+                z++;
+            }
+        }
+
+        if(z > 0){
+            isForgive = true;
+        }
+
+        return isForgive;
     }
 }
