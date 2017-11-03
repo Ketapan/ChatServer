@@ -5,9 +5,6 @@ import Gui.ServerGraphicalUserInterface;
 import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 public class ChatServerThread extends Thread {
     private ChatServer server = null;
@@ -23,20 +20,6 @@ public class ChatServerThread extends Thread {
         socket = _socket;
         ID = socket.getPort();
         username = name;
-    }
-
-    public void send(String msg) throws IOException {
-        //Konvertiert den String in bytes um und schickt die bytes an den client / an alle clients
-        try {
-            byte[] message = msg.getBytes();
-            streamOut.writeInt(message.length);
-            streamOut.write(message);
-            streamOut.flush();
-        } catch (IOException ioe) {
-            ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR sending: " + ioe.getMessage());
-            server.remove(ID);
-            stop();
-        }
     }
 
     public void sendByte(byte[] msgBytes) throws IOException {
@@ -64,20 +47,22 @@ public class ChatServerThread extends Thread {
             try {
                 UnzipMessage unzipMSG = new UnzipMessage();
                 int length = streamIn.readInt();
-                String messageTo = "";
+                String messageTo;
+                String message;
                 ArrayList messageList;
-                byte[] messageBytes = null;
+                byte[] messageBytes;
 
                 if(length > 0)
                 {
                     messageBytes = new byte[length];
                     streamIn.readFully(messageBytes, 0, length);
-                    unzipMSG.unzip(messageBytes);
                     messageList = unzipMSG.unzip(messageBytes);
                     messageTo = messageList.get(0).toString();
-                }
+                    message = messageList.get(1).toString();
 
-                server.handleMessages(messageTo, messageBytes);
+                    server.handleMessages(messageTo, messageBytes);
+                    ServerGraphicalUserInterface.publicGUI.appendTextMessages(message);
+                }
 
             } catch (IOException ioe) {
                 ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());

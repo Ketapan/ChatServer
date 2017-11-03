@@ -36,7 +36,6 @@ public class ChatServer implements Runnable {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Binding to port " + port + ", please wait ...");
             server = new ServerSocket(port);
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server started: " + server);
-            System.out.println();
             start();
         } catch (IOException ioe) {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Can not bind to port " + port + ": " + ioe.getMessage());
@@ -89,7 +88,7 @@ public class ChatServer implements Runnable {
     }
 
 
-    public void handleMessages(String messageTo, byte[] zipMessage){
+    public void handleMessages(String messageTo, byte[] zipMessage) throws IOException {
         if(messageTo.equals("alle")){
             for(int i = 0; i < clientCount; i++){
                 clients[i].sendByte(zipMessage);
@@ -97,12 +96,13 @@ public class ChatServer implements Runnable {
         } else {
             clients[findClientbyName(messageTo)].sendByte(zipMessage);
         }
+
     }
 
     public void refreshAllOnlineLists() throws IOException {
         sendToAllClients("/refreshList", "refreshList");
         for(int i = 0; i < ServerGraphicalUserInterface.publicGUI.userListModel.getSize(); i++){
-            sendToAllClients(ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i).toString(), "addwho");
+            sendToAllClients(ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i).toString(), "addWho");
         }
     }
 
@@ -148,7 +148,9 @@ public class ChatServer implements Runnable {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Client acepted: " + socket);
             DataInputStream input = null;
             String username = "";
+            ZipMessage zipMSG = new ZipMessage();
             int ID;
+            byte[] messageToRemoveUser;
 
             try {
                 input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -187,7 +189,8 @@ public class ChatServer implements Runnable {
                     ServerGraphicalUserInterface.publicGUI.appendTextMessages("Error opening thread: " + ioe);
                 }
                 ID = clients[findClientbyName("BEREITSVERGEBEN")].getID();
-                clients[findClientbyName("BEREITSVERGEBEN")].send("/vergeben");
+                messageToRemoveUser = zipMSG.zip("BEREITSVERGEBEN".getBytes(), "remove".getBytes(), "remove".getBytes());
+                clients[findClientbyName("BEREITSVERGEBEN")].sendByte(messageToRemoveUser);
                 remove(ID);
             }
         } else {
