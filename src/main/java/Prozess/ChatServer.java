@@ -36,6 +36,7 @@ public class ChatServer implements Runnable {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Binding to port " + port + ", please wait ...");
             server = new ServerSocket(port);
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server started: " + server);
+            System.out.println();
             start();
         } catch (IOException ioe) {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Can not bind to port " + port + ": " + ioe.getMessage());
