@@ -39,6 +39,18 @@ public class ChatServerThread extends Thread {
         }
     }
 
+    public void sendByte(byte[] msgBytes){
+        try {
+            streamOut.writeInt(msgBytes.length);
+            streamOut.write(msgBytes);
+            streamOut.flush();
+        } catch (IOException ioe) {
+            ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR sending: " + ioe.getMessage());
+            server.remove(ID);
+            stop();
+        }
+    }
+
     public int getID() {
         return ID;
     }
@@ -52,26 +64,21 @@ public class ChatServerThread extends Thread {
             try {
                 UnzipMessage unzipMSG = new UnzipMessage();
                 int length = streamIn.readInt();
-                String messageAsString = "";
-                ArrayList messageList = new ArrayList<>();
+                String messageTo = "";
+                ArrayList messageList;
+                byte[] messageBytes = null;
+
                 if(length > 0)
                 {
-                    byte[] messageBytes = new byte[length];
+                    messageBytes = new byte[length];
                     streamIn.readFully(messageBytes, 0, length);
                     unzipMSG.unzip(messageBytes);
                     messageList = unzipMSG.unzip(messageBytes);
-                    messageAsString = messageList.get(1).toString();
+                    messageTo = messageList.get(0).toString();
                 }
-                if(messageAsString.startsWith("-pm")){
-                    String privatMessageTo;
-                    String input = messageAsString;
-                    privatMessageTo = input.substring(3, input.indexOf(":"));
-                    System.out.println(privatMessageTo);
-                    input = input.substring(input.indexOf(":"), input.length());
-                    server.privatMessages(privatMessageTo, input, username);
-                } else {
-                    server.handle(ID, messageAsString, username);
-                }
+
+                server.handleMessages(messageTo, messageBytes);
+
             } catch (IOException ioe) {
                 ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());
                 server.remove(ID);

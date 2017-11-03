@@ -40,10 +40,7 @@ public class HandleMessages {
                 //oder immer die gleiche methode aufrufen unnd mit einer switch-case anweisung dann weitere methoden aufrufen
 
                 if(type.equalsIgnoreCase("pm")){
-                    server.privatMessages(messageTo, message);
-                } else if(type.equalsIgnoreCase("exit"))
-                {
-                    server.closeClientConnection(ID, username);
+                    server.privatMessages(messageTo, message, "username");
                 }
                 else {
                     server.sendToAllClients(message);

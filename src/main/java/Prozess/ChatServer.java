@@ -88,100 +88,35 @@ public class ChatServer implements Runnable {
         return -1;
     }
 
-    public synchronized void handle(int ID, String input, String username) {
-        //Hier werden die Nachrichten verarbeitet
-        if (input.equals("-bye") || input.equals("-exit") || input.equals("-quit")) {
-            clients[findClientbyID(ID)].send("/bye");
-            remove(ID);
-            for (int i = 0; i < clientCount; i++) {
-                clients[i].send("Client: " + username + " disconnected.");
+
+    public void handleMessages(String messageTo, byte[] zipMessage){
+        if(messageTo.equals("alle")){
+            for(int i = 0; i < clientCount; i++){
+                clients[i].sendByte(zipMessage);
             }
-        }
-        else {
-            sendToAllClients(username + ": " + input);
-        }
-    }
-
-    public synchronized void privatMessages(String privateMessageTo, String input, String username){
-        ServerGraphicalUserInterface.publicGUI.appendTextMessages(username + ": " + input);
-        if(input.startsWith(":-pic")){
-            String temp = input;
-            temp = temp.substring(5, temp.length());
-//            BufferedImage bImageFromConvert = base64StringToImg(temp);
-//            Toolkit toolkit = Toolkit.getDefaultToolkit();
-//            Image img = toolkit.createImage(bImageFromConvert.getSource());
-//            //Erzeuge die GUI
-//            JFrame frame = new JFrame("Screenshot");
-//            frame.getContentPane().add(new PicturePanel(img));
-//            frame.setSize(800, 400);
-//            frame.setLocationRelativeTo(null);
-//            frame.setVisible(true);
-//            temp = "";
-//            temp = imgToBase64String(bImageFromConvert);
-            temp = "/pic" + temp;
-            clients[findClientbyName(privateMessageTo)].send(temp);
-        } else if(input.startsWith("-msg")){
-            
-        }
-        else {
-            clients[findClientbyName(privateMessageTo)].send(username + input);
+        } else {
+            clients[findClientbyName(messageTo)].sendByte(zipMessage);
         }
     }
 
-    public void refreshAllOnlineLists(){
-        sendToAllClients("/refreshList");
+    public void refreshAllOnlineLists() throws IOException {
+        sendToAllClients("/refreshList", "refreshList");
         for(int i = 0; i < ServerGraphicalUserInterface.publicGUI.userListModel.getSize(); i++){
-            sendToAllClients("/addwho" + ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i));
+            sendToAllClients(ServerGraphicalUserInterface.publicGUI.userListModel.getElementAt(i).toString(), "addwho");
         }
     }
 
-    public void sendToAllClients(String input){
+    public void sendToAllClients(String input, String type) throws IOException {
+        byte[] zipByteMessage = null;
+        ZipMessage zipMSG = new ZipMessage();
         for(int i = 0; i < clientCount; i++){
-            clients[i].send(input);
+            zipByteMessage = zipMSG.zip("alle".getBytes(), input.getBytes(), type.getBytes());
+            clients[i].sendByte(zipByteMessage);
         }
         ServerGraphicalUserInterface.publicGUI.appendTextMessages(input);
     }
 
-    private void makeScreenshot(int ID) {
-        try {
-            byte[] imageInByte;
-
-            Robot awt_robot = new Robot();
-            BufferedImage screenshot = awt_robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-
-            String temp = imgToBase64String(screenshot);
-
-            clients[findClientbyID(ID)].send("/pic" + temp);
-
-        } catch (AWTException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static String imgToBase64String(final RenderedImage img)
-    {
-        final ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-        try
-        {
-            ImageIO.write(img, "PNG", os);
-            return Base64.getEncoder().encodeToString(os.toByteArray());
-        }
-        catch (final IOException ioe)
-        {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
-    public static BufferedImage base64StringToImg(final String base64String) {
-        try {
-            return ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(base64String)));
-        } catch (final IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
-    public synchronized void remove(int ID) {
+    public synchronized void remove(int ID) throws IOException {
         //Hier wird die ID aus der Liste entfernt
         int pos = findClientbyID(ID);
 
@@ -197,7 +132,7 @@ public class ChatServer implements Runnable {
                 }
             clientCount--;
             refreshAllOnlineLists();
-            sendToAllClients(username + " ging offline");
+            sendToAllClients(username + " ging offline", "msg");
             try {
                 toTerminate.close();
             } catch (IOException ioe) {
@@ -207,7 +142,7 @@ public class ChatServer implements Runnable {
         }
     }
 
-    private void addThread(Socket socket) {
+    private void addThread(Socket socket) throws IOException {
         //Benutzer wird hinzugefügt
         if (clientCount < clients.length) {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Client acepted: " + socket);
@@ -240,7 +175,7 @@ public class ChatServer implements Runnable {
 
                 ServerGraphicalUserInterface.publicGUI.userListModel.addElement(username);
                 refreshAllOnlineLists();
-                sendToAllClients(username + " kam online.");
+                sendToAllClients(username + " kam online.", "msg");
 
             } else {
                 clients[clientCount] = new ChatServerThread(this, socket, "BEREITSVERGEBEN");
