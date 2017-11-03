@@ -4,6 +4,10 @@ import Gui.ServerGraphicalUserInterface;
 
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class ChatServerThread extends Thread {
     private ChatServer server = null;
@@ -35,31 +39,6 @@ public class ChatServerThread extends Thread {
         }
     }
 
-    public void send(String msg, String username)
-    {
-        //Eventuell hier das senden der Privaten Nachrichten regeln
-    }
-
-    public void sendBytes(byte[] message){
-        /*
-            Hier werden die Bytes direkt versendet ohne Konvertierung
-            Grund:
-            -> Zum versenden des Screenshots da dieser direkt in bytes gewandelt wird
-            Problem:
-            -> So entstehen zwei Kanäle zum Senden von "nachrichten"
-         */
-        try{
-            streamOut.writeInt(message.length);
-            streamOut.write(message);
-            streamOut.flush();
-        } catch (IOException e)
-        {
-            ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR sending: " + e.getMessage());
-            server.remove(ID);
-            stop();
-        }
-    }
-
     public int getID() {
         return ID;
     }
@@ -71,15 +50,28 @@ public class ChatServerThread extends Thread {
         ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server Thread " + ID + " running.");
         while (true) {
             try {
+                UnzipMessage unzipMSG = new UnzipMessage();
                 int length = streamIn.readInt();
                 String messageAsString = "";
+                ArrayList messageList = new ArrayList<>();
                 if(length > 0)
                 {
                     byte[] messageBytes = new byte[length];
                     streamIn.readFully(messageBytes, 0, length);
-                    messageAsString = new String(messageBytes);
+                    unzipMSG.unzip(messageBytes);
+                    messageList = unzipMSG.unzip(messageBytes);
+                    messageAsString = messageList.get(1).toString();
                 }
-                server.handle(ID, messageAsString, username);
+                if(messageAsString.startsWith("-pm")){
+                    String privatMessageTo;
+                    String input = messageAsString;
+                    privatMessageTo = input.substring(3, input.indexOf(":"));
+                    System.out.println(privatMessageTo);
+                    input = input.substring(input.indexOf(":"), input.length());
+                    server.privatMessages(privatMessageTo, input, username);
+                } else {
+                    server.handle(ID, messageAsString, username);
+                }
             } catch (IOException ioe) {
                 ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());
                 server.remove(ID);
@@ -88,6 +80,7 @@ public class ChatServerThread extends Thread {
             }
         }
     }
+
 
     public void open() throws IOException {
         streamIn = new DataInputStream(new
