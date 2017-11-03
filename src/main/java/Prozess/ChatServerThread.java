@@ -25,7 +25,7 @@ public class ChatServerThread extends Thread {
         username = name;
     }
 
-    public void send(String msg) {
+    public void send(String msg) throws IOException {
         //Konvertiert den String in bytes um und schickt die bytes an den client / an alle clients
         try {
             byte[] message = msg.getBytes();
@@ -39,7 +39,7 @@ public class ChatServerThread extends Thread {
         }
     }
 
-    public void sendByte(byte[] msgBytes){
+    public void sendByte(byte[] msgBytes) throws IOException {
         try {
             streamOut.writeInt(msgBytes.length);
             streamOut.write(msgBytes);
@@ -81,7 +81,11 @@ public class ChatServerThread extends Thread {
 
             } catch (IOException ioe) {
                 ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());
-                server.remove(ID);
+                try {
+                    server.remove(ID);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 stop();
                 interrupt();
             }

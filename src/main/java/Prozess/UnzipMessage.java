@@ -25,13 +25,9 @@ public class UnzipMessage {
 
         zip.close();
         input.close();
-
-        byte[] datenKorrekt = new byte[anzahl];
-        System.arraycopy( daten, 0, datenKorrekt, 0, anzahl );
-
-        for(int i = 0; i < ergebnisListe.size(); i++){
-            System.out.println(i + ": " + ergebnisListe.get(i));
-        }
+//
+//        byte[] datenKorrekt = new byte[anzahl];
+//        System.arraycopy( daten, 0, datenKorrekt, 0, anzahl );
 
         return ergebnisListe;
     }
