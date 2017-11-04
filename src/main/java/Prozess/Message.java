@@ -1,8 +1,9 @@
 package Prozess;
 
 import java.awt.*;
+import java.io.Serializable;
 
-public class Message {
+public class Message implements Serializable{
     String messageString = null;
     String messageTo = null;
     String type = null;

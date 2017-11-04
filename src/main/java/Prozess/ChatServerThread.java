@@ -35,6 +35,11 @@ public class ChatServerThread extends Thread {
         }
     }
 
+    public void sendObject(Message msg) throws IOException{
+        streamOut.writeObject(msg);
+        streamOut.flush();
+    }
+
     public int getID() {
         return ID;
     }
@@ -59,6 +64,7 @@ public class ChatServerThread extends Thread {
 //                    streamIn.readFully(messageBytes, 0, length);
 
                 msg = (Message) streamIn.readObject();
+                server.handleMessage(msg);
 
 //                    messageList = unzipMSG.unzip(messageBytes);
 //                    messageTo = messageList.get(0).toString();

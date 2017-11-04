@@ -52,8 +52,8 @@ public class ServerGraphicalUserInterface {
         frame.setLocationRelativeTo(null);
         frame.setPreferredSize(frame.getSize());
         frame.setMinimumSize(frame.getSize());
-
         //Eigenschaften der Componenten festlegen
+
         publicGUI.textArea_sendMessages.setEditable(false);
         publicGUI.textArea_sendMessages.setWrapStyleWord(true);
         publicGUI.textArea_sendMessages.setLineWrap(true);

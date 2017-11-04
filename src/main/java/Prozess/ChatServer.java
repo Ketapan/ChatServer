@@ -91,13 +91,19 @@ public class ChatServer implements Runnable {
     }
 
 
-    public void handleMessages(String messageTo, byte[] zipMessage) throws IOException {
-        if(messageTo.equals("alle")){
-            for(int i = 0; i < clientCount; i++){
-                clients[i].sendByte(zipMessage);
-            }
-        } else {
-            clients[findClientbyName(messageTo)].sendByte(zipMessage);
+//    public void handleMessages(String messageTo, byte[] zipMessage) throws IOException {
+//        if(messageTo.equals("alle")){
+//            for(int i = 0; i < clientCount; i++){
+//                clients[i].sendByte(zipMessage);
+//            }
+//        } else {
+//            clients[findClientbyName(messageTo)].sendByte(zipMessage);
+//        }
+//    }
+
+    public void handleMessage(Message msg) throws IOException{
+        for(int i = 0; i < clientCount; i++){
+            clients[i].sendObject(msg);
         }
     }
 
