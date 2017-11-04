@@ -8,6 +8,17 @@ import java.util.zip.ZipInputStream;
 
 public class UnzipMessage {
 
+    public String getMessageTo() {
+        return messageTo;
+    }
+
+    public void setMessageTo(String messageTo) {
+        this.messageTo = messageTo;
+    }
+
+    String messageTo = "";
+
+
     public ArrayList unzip(byte[] pDaten) throws IOException
     {
         InputStream input = new ByteArrayInputStream(pDaten);
@@ -16,7 +27,8 @@ public class UnzipMessage {
         int anzahl = 0;
         ArrayList<String> ergebnisListe = new ArrayList<>();
 
-        while((zip.getNextEntry()) != null){
+        while((zip.getNextEntry()) != null)
+        {
             anzahl = zip.read(daten);
             byte[] bla = new byte[anzahl];
             System.arraycopy(daten, 0, bla, 0, anzahl);

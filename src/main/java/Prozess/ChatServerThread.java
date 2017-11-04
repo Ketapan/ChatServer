@@ -10,9 +10,10 @@ public class ChatServerThread extends Thread {
     private ChatServer server = null;
     private Socket socket = null;
     private int ID = -1;
-    private DataInputStream streamIn = null;
-    private DataOutputStream streamOut = null;
+    private ObjectInputStream streamIn = null;
+    private ObjectOutputStream streamOut = null;
     private String username = "";
+    private Message msg = new Message();
 
     public ChatServerThread(ChatServer _server, Socket _socket, String name) {
         super();
@@ -45,26 +46,29 @@ public class ChatServerThread extends Thread {
         ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server Thread " + ID + " running.");
         while (true) {
             try {
-                UnzipMessage unzipMSG = new UnzipMessage();
-                int length = streamIn.readInt();
+//                UnzipMessage unzipMSG = new UnzipMessage();
+//                int length = streamIn.readInt();
                 String messageTo;
                 String message;
-                ArrayList messageList;
-                byte[] messageBytes;
+//                ArrayList messageList;
+//                byte[] messageBytes;
 
-                if(length > 0)
-                {
-                    messageBytes = new byte[length];
-                    streamIn.readFully(messageBytes, 0, length);
-                    messageList = unzipMSG.unzip(messageBytes);
-                    messageTo = messageList.get(0).toString();
-                    message = messageList.get(1).toString();
+//                if(length > 0)
+//                {
+//                    messageBytes = new byte[length];
+//                    streamIn.readFully(messageBytes, 0, length);
 
-                    server.handleMessages(messageTo, messageBytes);
-                    ServerGraphicalUserInterface.publicGUI.appendTextMessages(message);
-                }
+                msg = (Message) streamIn.readObject();
 
-            } catch (IOException ioe) {
+//                    messageList = unzipMSG.unzip(messageBytes);
+//                    messageTo = messageList.get(0).toString();
+//                    message = messageList.get(1).toString();
+//
+//                    server.handleMessages(messageTo, messageBytes);
+//                    ServerGraphicalUserInterface.publicGUI.appendTextMessages(message);
+//                }
+
+            } catch (Exception ioe) {
                 ServerGraphicalUserInterface.publicGUI.appendTextMessages(ID + " ERROR reading: " + ioe.getMessage());
                 try {
                     server.remove(ID);
@@ -79,10 +83,8 @@ public class ChatServerThread extends Thread {
 
 
     public void open() throws IOException {
-        streamIn = new DataInputStream(new
-                BufferedInputStream(socket.getInputStream()));
-        streamOut = new DataOutputStream(new
-                BufferedOutputStream(socket.getOutputStream()));
+        streamIn = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        streamOut = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
     }
 
     public void close() throws IOException {

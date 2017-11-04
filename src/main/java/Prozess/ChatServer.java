@@ -34,7 +34,10 @@ public class ChatServer implements Runnable {
         //Startet Server und den Listener
         try {
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Binding to port " + port + ", please wait ...");
-            server = new ServerSocket(port);
+            byte[] addr = "192.168.0.8".getBytes();
+            InetAddress address = InetAddress.getLocalHost();
+            System.out.println(address.getHostAddress());
+            server = new ServerSocket(port, 0, address);
             ServerGraphicalUserInterface.publicGUI.appendTextMessages("Server started: " + server);
             start();
         } catch (IOException ioe) {
@@ -96,8 +99,9 @@ public class ChatServer implements Runnable {
         } else {
             clients[findClientbyName(messageTo)].sendByte(zipMessage);
         }
-
     }
+
+
 
     public void refreshAllOnlineLists() throws IOException {
         sendToAllClients("/refreshList", "refreshList");
